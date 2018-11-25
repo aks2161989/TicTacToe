@@ -33,7 +33,7 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 	const int numButtons = 1;
 	const int bitmapSize = 16;
 
-	const DWORD buttonStyles = BTNS_DROPDOWN | BTNS_AUTOSIZE;
+	const DWORD buttonStyles = BTNS_BUTTON;
 
 	// Create the toolbar.
 	HWND hWndToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
