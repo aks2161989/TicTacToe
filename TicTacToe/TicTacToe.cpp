@@ -16,6 +16,19 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 HWND g_hWndToolbar;
 HWND hWndComboBox1, hWndComboBox2;
+HWND btn_hwnd[9];
+
+//Constants
+const int btn_id_0 = 0,
+btn_id_1 = 1,
+btn_id_2 = 2,
+btn_id_3 = 3,
+btn_id_4 = 4,
+btn_id_5 = 5,
+btn_id_6 = 6,
+btn_id_7 = 7,
+btn_id_8 = 8;
+
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -257,6 +270,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	break;
 	case WM_CREATE:
 		g_hWndToolbar = CreateSimpleToolbar(hWnd);
+
+		btn_hwnd[0] = CreateWindowA("Button", "0", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 80, 80, hWnd, (HMENU)btn_id_0, hInst, NULL);
+		btn_hwnd[1] = CreateWindowA("Button", "1", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 55, 80, 80, hWnd, (HMENU)btn_id_1, hInst, NULL);
+		btn_hwnd[2] = CreateWindowA("Button", "2", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 55, 80, 80, hWnd, (HMENU)btn_id_2, hInst, NULL);
+		btn_hwnd[3] = CreateWindowA("Button", "3", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 135, 80, 80, hWnd, (HMENU)btn_id_3, hInst, NULL);
+		btn_hwnd[4] = CreateWindowA("Button", "4", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 135, 80, 80, hWnd, (HMENU)btn_id_4, hInst, NULL);
+		btn_hwnd[5] = CreateWindowA("Button", "5", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 135, 80, 80, hWnd, (HMENU)btn_id_5, hInst, NULL);
+		btn_hwnd[6] = CreateWindowA("Button", "6", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 215, 80, 80, hWnd, (HMENU)btn_id_6, hInst, NULL);
+		btn_hwnd[7] = CreateWindowA("Button", "7", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 215, 80, 80, hWnd, (HMENU)btn_id_7, hInst, NULL);
+		btn_hwnd[8] = CreateWindowA("Button", "8", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 215, 80, 80, hWnd, (HMENU)btn_id_8, hInst, NULL);
+
 		break;
 	case WM_SIZE:
 		SendMessage(g_hWndToolbar, TB_AUTOSIZE, 0, 0);
