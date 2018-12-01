@@ -17,6 +17,7 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 HWND g_hWndToolbar;
 HWND hWndComboBox1, hWndComboBox2;
 HWND btn_hwnd[9];
+HWND g_hWndStatusbar;
 
 //Constants
 const int btn_id_0 = 0,
@@ -134,6 +135,68 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 	return	hWndToolbar;
 }
 // Toolbar code ends.
+
+// Statusbar code below
+// Description:
+// Creates a status bar and divides it into the specified number of parts.
+// Parameters:
+//	hwndParent - parent window for the status bar.
+//	idStatus - child window identifier of the status bar.
+//	hinst - handle to the application instance.
+//	cParts - number of parts into which to divide the status bar.
+// Returns:
+//	The handle to the status bar.
+//
+HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE hinst, int cParts)
+{
+	HWND hwndStatus;
+	RECT rcClient;
+	HLOCAL hloc;
+	PINT paParts;
+	int i, nWidth;
+
+	// Ensure that the common control DLL is loaded.
+	InitCommonControls();
+
+	// Create the status bar.
+	hwndStatus = CreateWindowEx(
+		0,							// no extended styles
+		STATUSCLASSNAME,			// name of status bar class
+		L"Idle",				// no text when first created
+		SBARS_SIZEGRIP |			// includes a sizing grip
+		WS_CHILD | WS_VISIBLE,		// creates a visible child window
+		0, 0, 0, 0,					// ignores size and position
+		hwndParent,					// handle to parent window
+		(HMENU)idStatus,			// child window identifier
+		hinst,						// handle to application instance
+		NULL);						// no window creation data
+
+	// Get the coordinates of the parent window's client area.
+	GetClientRect(hwndParent, &rcClient);
+
+	// Allocate an array for holding the right edge coordinates.
+	hloc = LocalAlloc(LHND, sizeof(int) * cParts);
+	paParts = (PINT)LocalLock(hloc);
+
+	// Calculate the right edge coordinate for each part, and 
+	// copy the coordinates to the array.
+	nWidth = rcClient.right / cParts;
+	int rightEdge = nWidth;
+	for (i = 0; i < cParts; i++) {
+		paParts[i] = rightEdge;
+		rightEdge += nWidth;
+	}
+
+	// Tell the status bar to create the window parts.
+	SendMessage(hwndStatus, SB_SETPARTS, (WPARAM)cParts, (LPARAM)
+		paParts);
+
+	// Free the array, and return.
+	LocalUnlock(hloc);
+	LocalFree(hloc);
+	return hwndStatus;
+}
+// Statusbar code ends
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -281,9 +344,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		btn_hwnd[7] = CreateWindowA("Button", "7", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 215, 80, 80, hWnd, (HMENU)btn_id_7, hInst, NULL);
 		btn_hwnd[8] = CreateWindowA("Button", "8", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 215, 80, 80, hWnd, (HMENU)btn_id_8, hInst, NULL);
 
+		g_hWndStatusbar = DoCreateStatusBar(hWnd, 1, hInst, 1);
 		break;
 	case WM_SIZE:
-		SendMessage(g_hWndToolbar, TB_AUTOSIZE, 0, 0);
+		SendMessage(g_hWndToolbar, TB_AUTOSIZE, 0, 0); 
+
+		// Code to automatically resize status bar on dragging window STARTS here
+		int iStatusBarWidths[1];
+		iStatusBarWidths[0] = -1;
+		SendMessage(g_hWndStatusbar, SB_SETPARTS, (WPARAM)1, (LPARAM)iStatusBarWidths);
+		SendMessage(g_hWndStatusbar, WM_SIZE, 0, 0);
+		// Code to automatically resize status bar on dragging window ENDS here
+
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
