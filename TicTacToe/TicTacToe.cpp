@@ -198,6 +198,14 @@ HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE hinst, int cPart
 }
 // Statusbar code ends
 
+// Set font
+bool CALLBACK SetFont(HWND child, LPARAM font)
+{
+	SendMessage(child, WM_SETFONT, font, true);
+	return true;
+}
+// Set font code ends here
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPWSTR    lpCmdLine,
@@ -345,6 +353,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		btn_hwnd[8] = CreateWindowA("Button", "X", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 175, 60, 60, hWnd, (HMENU)btn_id_8, hInst, NULL);
 
 		g_hWndStatusbar = DoCreateStatusBar(hWnd, 1, hInst, 1);
+		
+		// Set default GUI font after creating all child windows 
+		EnumChildWindows(hWnd, (WNDENUMPROC)SetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
+		// Set default font code ends here
+
 		break;
 	case WM_SIZE:
 		SendMessage(g_hWndToolbar, TB_AUTOSIZE, 0, 0); 
