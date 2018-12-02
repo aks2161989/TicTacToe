@@ -92,7 +92,7 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 		WC_COMBOBOX,
 		TEXT(""),
 		CBS_DROPDOWN | CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		50, 5, 100, 100,
+		40, 5, 100, 100,
 		hWndToolbar, NULL, NULL, NULL);
 
 	// ADD 3 ITEMS
@@ -114,7 +114,7 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 		WC_COMBOBOX,
 		TEXT(""),
 		CBS_DROPDOWN | CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER,
-		155, 5, 100, 100,
+		147, 5, 45, 100,
 		hWndToolbar, NULL, NULL, NULL);
 
 	// ADD 2 ITEMS
@@ -278,8 +278,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 	hInst = hInstance; // Store instance handle in our global variable
 
-	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-		CW_USEDEFAULT, 0, 277, 385, nullptr, nullptr, hInstance, nullptr);
+	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED |WS_CAPTION | WS_SYSMENU,
+		CW_USEDEFAULT, 0, 218, 325, nullptr, nullptr, hInstance, nullptr);
 
 	if (!hWnd)
 	{
@@ -334,15 +334,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		g_hWndToolbar = CreateSimpleToolbar(hWnd);
 
-		btn_hwnd[0] = CreateWindowA("Button", "0", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 80, 80, hWnd, (HMENU)btn_id_0, hInst, NULL);
-		btn_hwnd[1] = CreateWindowA("Button", "1", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 55, 80, 80, hWnd, (HMENU)btn_id_1, hInst, NULL);
-		btn_hwnd[2] = CreateWindowA("Button", "2", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 55, 80, 80, hWnd, (HMENU)btn_id_2, hInst, NULL);
-		btn_hwnd[3] = CreateWindowA("Button", "3", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 135, 80, 80, hWnd, (HMENU)btn_id_3, hInst, NULL);
-		btn_hwnd[4] = CreateWindowA("Button", "4", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 135, 80, 80, hWnd, (HMENU)btn_id_4, hInst, NULL);
-		btn_hwnd[5] = CreateWindowA("Button", "5", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 135, 80, 80, hWnd, (HMENU)btn_id_5, hInst, NULL);
-		btn_hwnd[6] = CreateWindowA("Button", "6", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 215, 80, 80, hWnd, (HMENU)btn_id_6, hInst, NULL);
-		btn_hwnd[7] = CreateWindowA("Button", "7", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 90, 215, 80, 80, hWnd, (HMENU)btn_id_7, hInst, NULL);
-		btn_hwnd[8] = CreateWindowA("Button", "8", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 170, 215, 80, 80, hWnd, (HMENU)btn_id_8, hInst, NULL);
+		btn_hwnd[0] = CreateWindowA("Button", "O", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 60, 60, hWnd, (HMENU)btn_id_0, hInst, NULL);
+		btn_hwnd[1] = CreateWindowA("Button", "1", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 55, 60, 60, hWnd, (HMENU)btn_id_1, hInst, NULL);
+		btn_hwnd[2] = CreateWindowA("Button", "2", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 55, 60, 60, hWnd, (HMENU)btn_id_2, hInst, NULL);
+		btn_hwnd[3] = CreateWindowA("Button", "3", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 115, 60, 60, hWnd, (HMENU)btn_id_3, hInst, NULL);
+		btn_hwnd[4] = CreateWindowA("Button", "4", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 115, 60, 60, hWnd, (HMENU)btn_id_4, hInst, NULL);
+		btn_hwnd[5] = CreateWindowA("Button", "5", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 115, 60, 60, hWnd, (HMENU)btn_id_5, hInst, NULL);
+		btn_hwnd[6] = CreateWindowA("Button", "6", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 175, 60, 60, hWnd, (HMENU)btn_id_6, hInst, NULL);
+		btn_hwnd[7] = CreateWindowA("Button", "7", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 175, 60, 60, hWnd, (HMENU)btn_id_7, hInst, NULL);
+		btn_hwnd[8] = CreateWindowA("Button", "X", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 175, 60, 60, hWnd, (HMENU)btn_id_8, hInst, NULL);
 
 		g_hWndStatusbar = DoCreateStatusBar(hWnd, 1, hInst, 1);
 		break;
