@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "TicTacToe.h"
 #include <CommCtrl.h>
+//#include "GameLogic.cpp" // All backend code
+
 #pragma comment(lib, "comctl32.lib")
 
 #define MAX_LOADSTRING 100
@@ -20,16 +22,19 @@ HWND btn_hwnd[9];
 HWND g_hWndStatusbar;
 
 //Constants
-const int btn_id_0 = 0,
-btn_id_1 = 1,
-btn_id_2 = 2,
-btn_id_3 = 3,
-btn_id_4 = 4,
-btn_id_5 = 5,
-btn_id_6 = 6,
-btn_id_7 = 7,
-btn_id_8 = 8;
-
+const int btn_id_0 = 10,
+btn_id_1 = 11,
+btn_id_2 = 12,
+btn_id_3 = 13,
+btn_id_4 = 14,
+btn_id_5 = 15,
+btn_id_6 = 16,
+btn_id_7 = 17,
+btn_id_8 = 18,
+toolbar_id = 123,
+combobox1_id = 456,
+combobox2_id = 789,
+statusbar_id = 111;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -50,9 +55,9 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 	const DWORD buttonStyles = BTNS_BUTTON;
 
 	// Create the toolbar.
-	HWND hWndToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
+	HWND hWndToolbar = CreateWindowExA(0, TOOLBARCLASSNAME, NULL,
 		WS_CHILD | TBSTYLE_WRAPABLE | TBSTYLE_EX_DRAWDDARROWS, 0, 0, 0, 0,
-		hWndParent, NULL, hInst, NULL);
+		hWndParent, (HMENU)toolbar_id, hInst, NULL);
 
 	if (hWndToolbar == NULL)
 		return NULL;
@@ -78,7 +83,7 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 	TBBUTTON tbButtons[numButtons] =
 	{
 		{
-			MAKELONG(STD_FILENEW, ImageListID), IDM_NEW, TBSTATE_ENABLED, buttonStyles, {0}, 0, (INT_PTR)L"New"
+			MAKELONG(STD_FILENEW, ImageListID), IDM_NEW, TBSTATE_ENABLED, buttonStyles, {0}, 0, (INT_PTR)_T("New")
 		}
 	};
 
@@ -88,12 +93,12 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 
 	// Drop-down list code below
 	// CREATE first COMBO BOX
-	hWndComboBox1 = CreateWindow(
+	hWndComboBox1 = CreateWindowA(
 		WC_COMBOBOX,
 		TEXT(""),
-		CBS_DROPDOWN | CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER,
+		 CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWNLIST,
 		40, 5, 100, 100,
-		hWndToolbar, NULL, NULL, NULL);
+		hWndToolbar, (HMENU)combobox1_id, NULL, NULL);
 
 	// ADD 3 ITEMS
 	SendMessage(
@@ -109,13 +114,17 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 		(UINT)CB_ADDSTRING,
 		(WPARAM)0, (LPARAM)TEXT("Impossible"));
 
+	// Send the CB_SETCURSEL message to display an initial item (Medium)
+	// in the selection field
+	SendMessage(hWndComboBox1, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
+
 	// Create combo box 2
-	hWndComboBox2 = CreateWindow(
+	hWndComboBox2 = CreateWindowA(
 		WC_COMBOBOX,
 		TEXT(""),
-		CBS_DROPDOWN | CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER,
+		 CBS_HASSTRINGS | WS_VISIBLE | WS_CHILD | WS_BORDER | CBS_DROPDOWNLIST,
 		147, 5, 45, 100,
-		hWndToolbar, NULL, NULL, NULL);
+		hWndToolbar, (HMENU)combobox2_id, NULL, NULL);
 
 	// ADD 2 ITEMS
 	SendMessage(
@@ -127,6 +136,10 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 		(UINT)CB_ADDSTRING,
 		(WPARAM)0, (LPARAM)TEXT("O"));
 	//Drop-down list code ends
+
+	// Send the CB_SETCURSEL message to display an initial item (X)
+	// in the selection field
+	SendMessage(hWndComboBox2, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 
 	// Resize the toolbar, and then show it.
 	SendMessage(hWndToolbar, TB_AUTOSIZE | TB_SETEXTENDEDSTYLE, 0, 0);
@@ -162,7 +175,7 @@ HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE hinst, int cPart
 	hwndStatus = CreateWindowEx(
 		0,							// no extended styles
 		STATUSCLASSNAME,			// name of status bar class
-		L"Idle",				// no text when first created
+		_T("Idle"),				// no text when first created
 		SBARS_SIZEGRIP |			// includes a sizing grip
 		WS_CHILD | WS_VISIBLE,		// creates a visible child window
 		0, 0, 0, 0,					// ignores size and position
@@ -215,6 +228,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	// TODO: Place code here.
+	//srand(static_cast<unsigned int>(time(0)));
 
 	// Initialize global strings
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -316,6 +330,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_COMMAND:
 	{
+		int ItemIndex;
+		TCHAR ListItem[256];
 		int wmId = LOWORD(wParam);
 		// Parse the menu selections:
 		switch (wmId)
@@ -326,8 +342,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
+		case btn_id_0: // Testing if clicking on first button changes text
+			SendMessage(btn_hwnd[0], WM_SETTEXT, 0, (LPARAM)_T("X"));
+			break;
+		case combobox1_id: // When the first combo box is clicked
+			if (HIWORD(wParam) == CBN_SELCHANGE) // Proceed only if the users drops down the list and selects an option
+			{
+				ItemIndex = SendMessageA((HWND)lParam, (UINT)CB_GETCURSEL,
+					(WPARAM)0, (LPARAM)0); //   Send CB_GETCURSEL message to get the index of the selected list item.
+				(TCHAR)SendMessageA((HWND)lParam, (UINT)CB_GETLBTEXT,
+					(WPARAM)ItemIndex, (LPARAM)ListItem); //   Send CB_GETLBTEXT message to get the item.
+				MessageBox(hWnd, _T(ListItem), TEXT("Item selected"), MB_OK); //   Display the item in a messagebox.
+				
+			}
+			break;
+		case combobox2_id: // When the second combo box is clicked
+			if (HIWORD(wParam) == CBN_SELCHANGE) // Proceed only if the users drops down the list and selects an option
+			{
+				ItemIndex = SendMessageA((HWND)lParam, (UINT)CB_GETCURSEL,
+					(WPARAM)0, (LPARAM)0); //   Send CB_GETCURSEL message to get the index of the selected list item.
+				(TCHAR)SendMessageA((HWND)lParam, (UINT)CB_GETLBTEXT,
+					(WPARAM)ItemIndex, (LPARAM)ListItem); //   Send CB_GETLBTEXT message to get the item.
+				MessageBox(hWnd, _T(ListItem), TEXT("Item selected"), MB_OK); //   Display the item in a messagebox.
+
+			}
+			break;
 		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			return DefWindowProcW(hWnd, message, wParam, lParam);
 		}
 	}
 	break;
@@ -342,17 +383,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		g_hWndToolbar = CreateSimpleToolbar(hWnd);
 
-		btn_hwnd[0] = CreateWindowA("Button", "O", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 60, 60, hWnd, (HMENU)btn_id_0, hInst, NULL);
-		btn_hwnd[1] = CreateWindowA("Button", "1", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 55, 60, 60, hWnd, (HMENU)btn_id_1, hInst, NULL);
-		btn_hwnd[2] = CreateWindowA("Button", "2", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 55, 60, 60, hWnd, (HMENU)btn_id_2, hInst, NULL);
-		btn_hwnd[3] = CreateWindowA("Button", "3", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 115, 60, 60, hWnd, (HMENU)btn_id_3, hInst, NULL);
-		btn_hwnd[4] = CreateWindowA("Button", "4", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 115, 60, 60, hWnd, (HMENU)btn_id_4, hInst, NULL);
-		btn_hwnd[5] = CreateWindowA("Button", "5", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 115, 60, 60, hWnd, (HMENU)btn_id_5, hInst, NULL);
-		btn_hwnd[6] = CreateWindowA("Button", "6", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 175, 60, 60, hWnd, (HMENU)btn_id_6, hInst, NULL);
-		btn_hwnd[7] = CreateWindowA("Button", "7", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 175, 60, 60, hWnd, (HMENU)btn_id_7, hInst, NULL);
-		btn_hwnd[8] = CreateWindowA("Button", "X", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 175, 60, 60, hWnd, (HMENU)btn_id_8, hInst, NULL);
+		btn_hwnd[0] = CreateWindowA("Button", _T(""), WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 60, 60, hWnd, (HMENU)btn_id_0, hInst, NULL);
+		btn_hwnd[1] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 55, 60, 60, hWnd, (HMENU)btn_id_1, hInst, NULL);
+		btn_hwnd[2] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 55, 60, 60, hWnd, (HMENU)btn_id_2, hInst, NULL);
+		btn_hwnd[3] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 115, 60, 60, hWnd, (HMENU)btn_id_3, hInst, NULL);
+		btn_hwnd[4] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 115, 60, 60, hWnd, (HMENU)btn_id_4, hInst, NULL);
+		btn_hwnd[5] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 115, 60, 60, hWnd, (HMENU)btn_id_5, hInst, NULL);
+		btn_hwnd[6] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 175, 60, 60, hWnd, (HMENU)btn_id_6, hInst, NULL);
+		btn_hwnd[7] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 175, 60, 60, hWnd, (HMENU)btn_id_7, hInst, NULL);
+		btn_hwnd[8] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 175, 60, 60, hWnd, (HMENU)btn_id_8, hInst, NULL);
 
-		g_hWndStatusbar = DoCreateStatusBar(hWnd, 1, hInst, 1);
+		g_hWndStatusbar = DoCreateStatusBar(hWnd, statusbar_id, hInst, 1);
 		
 		// Set default GUI font after creating all child windows 
 		EnumChildWindows(hWnd, (WNDENUMPROC)SetFont, (LPARAM)GetStockObject(DEFAULT_GUI_FONT));
@@ -370,11 +411,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Code to automatically resize status bar on dragging window ENDS here
 
 		break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
 	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProcW(hWnd, message, wParam, lParam);
 	}
 	return 0;
 }
