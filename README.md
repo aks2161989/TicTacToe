@@ -3,6 +3,6 @@
 * Play with the computer
 * Play as __X__ or __O__
 
-![Screenshot](Screenshot.png)
+![Screenshot](TicTacToe/Screenshot.png)
 
 Download the executable [here](https://github.com/aks2161989/Executables-of-tic-tac-toe/raw/master/TicTacToe.exe).
