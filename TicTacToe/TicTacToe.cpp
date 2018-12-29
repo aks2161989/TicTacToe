@@ -1,12 +1,11 @@
 // TicTacToe.cpp : Defines the entry point for the application.
-//
-
 
 #include "stdafx.h"
+#include<cstdlib>
 #include "TicTacToe.h"
 #include <CommCtrl.h>
-//#include "GameLogic.cpp" // All backend code
-
+#include "GameLogic.h" // All backend code
+#include <ctime>
 #pragma comment(lib, "comctl32.lib")
 
 #define MAX_LOADSTRING 100
@@ -17,9 +16,10 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 HWND g_hWndToolbar;
-HWND hWndComboBox1, hWndComboBox2;
-HWND btn_hwnd[9];
-HWND g_hWndStatusbar;
+HWND hWndComboBox1, hWndComboBox2;				// Declare 2 combo boxes 
+HWND btn_hwnd[9];								// An array of 9 buttons
+
+
 
 //Constants
 const int btn_id_0 = 10,
@@ -35,6 +35,13 @@ toolbar_id = 123,
 combobox1_id = 456,
 combobox2_id = 789,
 statusbar_id = 111;
+
+int intDifficulty = 1; // Difficulty level in int 
+TicTacToe* t = new TicTacToe(intDifficulty); // Instantiate a tic tac toe game
+
+TCHAR comboBoxDifficulty[256] = _T("Medium"); // Difficulty level chosen by the player in the first combo box. Default value = "Medium"
+
+int ItemIndex; // Get the index of the combo box item selected by the user
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -88,8 +95,8 @@ HWND CreateSimpleToolbar(HWND hWndParent)
 	};
 
 	// Add buttons.
-	SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-	SendMessage(hWndToolbar, TB_ADDBUTTONS, (WPARAM)numButtons, (LPARAM)&tbButtons);
+	SendMessageA(hWndToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+	SendMessageA(hWndToolbar, TB_ADDBUTTONS, (WPARAM)numButtons, (LPARAM)&tbButtons);
 
 	// Drop-down list code below
 	// CREATE first COMBO BOX
@@ -175,7 +182,7 @@ HWND DoCreateStatusBar(HWND hwndParent, int idStatus, HINSTANCE hinst, int cPart
 	hwndStatus = CreateWindowEx(
 		0,							// no extended styles
 		STATUSCLASSNAME,			// name of status bar class
-		_T("Idle"),				// no text when first created
+		_T("Mark a square"),		// text shown on creation
 		SBARS_SIZEGRIP |			// includes a sizing grip
 		WS_CHILD | WS_VISIBLE,		// creates a visible child window
 		0, 0, 0, 0,					// ignores size and position
@@ -228,7 +235,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	// TODO: Place code here.
-	//srand(static_cast<unsigned int>(time(0)));
+	srand(static_cast<unsigned int>(time(0)));
+	rand();
+	t = new TicTacToe(intDifficulty);
 
 	// Initialize global strings
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -257,9 +266,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	return (int)msg.wParam;
 }
-
-
-
 //
 //  FUNCTION: MyRegisterClass()
 //
@@ -314,6 +320,26 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
+void updateAllButtons() // Update text of all buttons
+{
+	std::string strMSquareContents[9]{ "" };
+	int itemIndex = 0;
+	for (int outer = 0; outer < 3; outer++)
+	{
+		for (int inner = 0; inner < 3; inner++)
+		{
+			if (t->setMSquareContents(outer, inner) == 'X' ||
+				t->setMSquareContents(outer, inner) == 'O')
+				strMSquareContents[itemIndex] += t->setMSquareContents(outer, inner);
+			else
+				strMSquareContents[itemIndex] = "";
+			itemIndex++;
+		}
+	}
+	for (int i = 0; i < 9; i++)
+		SendMessageA(btn_hwnd[i], WM_SETTEXT, 0, (LPARAM)strMSquareContents[i].c_str());
+}
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -326,24 +352,98 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	string charToStr = "";
 	switch (message)
 	{
 	case WM_COMMAND:
 	{
-		int ItemIndex;
-		TCHAR ListItem[256];
 		int wmId = LOWORD(wParam);
 		// Parse the menu selections:
 		switch (wmId)
 		{
+		case ID_FILE_NEWGAME:
+		case IDM_NEW: // When the "New" button on toolbar or "File" menu is clicked
+			t = new TicTacToe(intDifficulty);
+			updateAllButtons();
+			SetWindowTextA(g_hWndStatusbar, "Mark a square");
+			break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
-		case btn_id_0: // Testing if clicking on first button changes text
-			SendMessage(btn_hwnd[0], WM_SETTEXT, 0, (LPARAM)_T("X"));
+		case btn_id_0: // When button (0, 0) is clicked
+			if (t->setMSquareContents(0, 0) != 'X' && t->setMSquareContents(0, 0) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('1');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_1: // When button (0, 1) is clicked
+			if (t->setMSquareContents(0, 1) != 'X' && t->setMSquareContents(0, 1) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('2');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_2: // When button (0, 2) is clicked
+			if (t->setMSquareContents(0, 2) != 'X' && t->setMSquareContents(0, 2) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('3');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_3: // When button (1, 0) is clicked
+			if (t->setMSquareContents(1, 0) != 'X' && t->setMSquareContents(1, 0) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('4');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_4: // When button (1, 1) is clicked
+			if (t->setMSquareContents(1, 1) != 'X' && t->setMSquareContents(1, 1) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('5');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_5: // When button (1, 2) is clicked
+			if (t->setMSquareContents(1, 2) != 'X' && t->setMSquareContents(1, 2) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('6');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_6: // When button (2, 0) is clicked
+			if (t->setMSquareContents(2, 0) != 'X' && t->setMSquareContents(2, 0) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('7');
+				t->play();
+				updateAllButtons();
+			}			
+			break;
+		case btn_id_7: // When button (2, 1) is clicked
+			if (t->setMSquareContents(2, 1) != 'X' && t->setMSquareContents(2, 1) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('8');
+				t->play();
+				updateAllButtons();
+			}
+			break;
+		case btn_id_8: // When button (2, 2) is clicked
+			if (t->setMSquareContents(2, 2) != 'X' && t->setMSquareContents(2, 2) != 'O' && !t->getIsWonOrLost())
+			{
+				t->setPlayerChoice('9');
+				t->play();
+				updateAllButtons();
+			}
 			break;
 		case combobox1_id: // When the first combo box is clicked
 			if (HIWORD(wParam) == CBN_SELCHANGE) // Proceed only if the users drops down the list and selects an option
@@ -351,9 +451,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ItemIndex = SendMessageA((HWND)lParam, (UINT)CB_GETCURSEL,
 					(WPARAM)0, (LPARAM)0); //   Send CB_GETCURSEL message to get the index of the selected list item.
 				(TCHAR)SendMessageA((HWND)lParam, (UINT)CB_GETLBTEXT,
-					(WPARAM)ItemIndex, (LPARAM)ListItem); //   Send CB_GETLBTEXT message to get the item.
-				MessageBox(hWnd, _T(ListItem), TEXT("Item selected"), MB_OK); //   Display the item in a messagebox.
-				
+					(WPARAM)ItemIndex, (LPARAM)comboBoxDifficulty); //   Send CB_GETLBTEXT message to get the item.
+				if (strcmp("Easy", comboBoxDifficulty) == 0)
+					intDifficulty = 0;
+				else if (strcmp("Medium", comboBoxDifficulty) == 0)
+					intDifficulty = 1;
+				if (strcmp("Impossible", comboBoxDifficulty) == 0)
+					intDifficulty = 2;
+				t = new TicTacToe(intDifficulty);
+				updateAllButtons();
+				SetWindowTextA(g_hWndStatusbar, "Mark a square");
 			}
 			break;
 		case combobox2_id: // When the second combo box is clicked
@@ -362,9 +469,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				ItemIndex = SendMessageA((HWND)lParam, (UINT)CB_GETCURSEL,
 					(WPARAM)0, (LPARAM)0); //   Send CB_GETCURSEL message to get the index of the selected list item.
 				(TCHAR)SendMessageA((HWND)lParam, (UINT)CB_GETLBTEXT,
-					(WPARAM)ItemIndex, (LPARAM)ListItem); //   Send CB_GETLBTEXT message to get the item.
-				MessageBox(hWnd, _T(ListItem), TEXT("Item selected"), MB_OK); //   Display the item in a messagebox.
-
+					(WPARAM)ItemIndex, (LPARAM)comboBoxCharacter); //   Send CB_GETLBTEXT message to get the item.
+				t = new TicTacToe(intDifficulty);
+				t->setPlayerChar(comboBoxCharacter[0]);
+				updateAllButtons();
+				SetWindowTextA(g_hWndStatusbar, "Mark a square");
 			}
 			break;
 		default:
@@ -383,7 +492,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		g_hWndToolbar = CreateSimpleToolbar(hWnd);
 
-		btn_hwnd[0] = CreateWindowA("Button", _T(""), WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 60, 60, hWnd, (HMENU)btn_id_0, hInst, NULL);
+		btn_hwnd[0] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 55, 60, 60, hWnd, (HMENU)btn_id_0, hInst, NULL);
 		btn_hwnd[1] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 55, 60, 60, hWnd, (HMENU)btn_id_1, hInst, NULL);
 		btn_hwnd[2] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 55, 60, 60, hWnd, (HMENU)btn_id_2, hInst, NULL);
 		btn_hwnd[3] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 115, 60, 60, hWnd, (HMENU)btn_id_3, hInst, NULL);
@@ -392,6 +501,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		btn_hwnd[6] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 10, 175, 60, 60, hWnd, (HMENU)btn_id_6, hInst, NULL);
 		btn_hwnd[7] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 70, 175, 60, 60, hWnd, (HMENU)btn_id_7, hInst, NULL);
 		btn_hwnd[8] = CreateWindowA("Button", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 130, 175, 60, 60, hWnd, (HMENU)btn_id_8, hInst, NULL);
+
+		updateAllButtons();
 
 		g_hWndStatusbar = DoCreateStatusBar(hWnd, statusbar_id, hInst, 1);
 		

@@ -1,5 +1,6 @@
 // A game of 'Tic tac toe' written by Akshay M Chavan
 
+#include "stdafx.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -7,7 +8,8 @@
 #include <ctime>
 
 using namespace std;
-
+HWND g_hWndStatusbar; // Declare a handle to the status bar
+TCHAR comboBoxCharacter[256] = _T("X"); // Character chosen by the player in the second combo box. Default value = "X"
 int getRandomNumber(int min, int max) // A function to calculate random numbers between min and max (both inclusive)
 {
 	static const double fraction = 1.0 / (RAND_MAX + 1.0);
@@ -27,11 +29,12 @@ private:
 	vector<int> outerIndexes; // The outer indexes (rows) of vacant squares [X][]
 	vector<int> innerIndexes; // The inner indexes (columns) of vacant squares [][X]
 	enum playerName { COMPUTER, PLAYER }; // An enum which indicates which player is being referred to
-	enum outcome { WIN, LOSE, DRAW }; //WIN: player wins, LOSE: player loses
+	enum outcome { WIN, LOSE, DRAW, NONE }; //WIN: player wins, LOSE: player loses
 	enum chosenDifficulty { EASY, MEDIUM, IMPOSSIBLE }; // An enum which indicates which difficulty is being referred to
 	chosenDifficulty m_Difficulty; // Difficulty chosen by the player
 	vector<int> playerMovesOuterIndexes; // Store the outer indexes (rows) of moves made by player
 	vector<int> playerMovesInnerIndexes; // Store the inner indexes (columns) of moves made by player
+	bool isWonOrLost; // Has the game already been won or lost?
 
 public:
 	TicTacToe(int difficulty = 1)
@@ -54,10 +57,61 @@ public:
 			}
 		}
 
-		playerChar = 'X';
-		computerChar = 'O';
+		playerChar = comboBoxCharacter[0];
+		
+		switch (playerChar)
+		{
+		case 'X':
+			computerChar = 'O';
+			break;
+		case 'O':
+			computerChar = 'X';
+		}
+		isWonOrLost = false; // The game has just started
 	}
-	friend ostream& operator<<(ostream& out, const TicTacToe& t);
+	TicTacToe& operator=(const TicTacToe& t)
+	{
+		this->m_Difficulty = t.m_Difficulty;
+		for (int outer = 0; outer < 3; outer++)
+		{
+			for (int inner = 0; inner < 3; inner++)
+			{
+				this->mSquareContents[outer][inner] = t.mSquareContents[outer][inner];
+			}
+		}
+		this->playerChar = t.playerChar;
+		this->computerChar = t.computerChar;
+		this->isWonOrLost = t.isWonOrLost;
+		return *this;
+	}	
+	char& setMSquareContents(int outer, int inner) // mSquareContents[][] is private, so use this function to get and set specific values
+	{
+		return mSquareContents[outer][inner];
+	}
+	void setPlayerChoice(char Choice) // Set the value of playerChoice. eg: '1'
+	{
+		this->playerChoice = Choice;
+	}
+	void setDifficulty(int difficulty)
+	{
+		this->m_Difficulty = static_cast<chosenDifficulty>(difficulty);
+	}
+	bool getIsWonOrLost() // Returns the value of isWonOrLost
+	{					  // Useful to determine if the game has been won/lost	
+		return this->isWonOrLost;
+	}
+	void setPlayerChar(char selection) // Resets the value of player character and
+	{								   // computer character when player selects								 // a player character from the combo box	
+		this->playerChar = selection;
+		switch (playerChar)
+		{
+		case 'X':
+			this->computerChar = 'O';
+			break;
+		case 'O':
+			this->computerChar = 'X';
+		}
+	}
 	void updateGrid(char character) // Puts 'X' or 'O' at the right square
 	{ /*
 	   * Find which character has been selected
@@ -71,30 +125,6 @@ public:
 				if (playerChoice == mSquareContents[indexOuter][indexInner])
 					mSquareContents[indexOuter][indexInner] = character;
 			}
-		}
-	}
-	void takePlayerChoice() // Ask the player to choose which square to mark by entering the specific number in that square
-	{
-		int count = 0;
-
-		cout << "Enter appropriate choice: ";
-		cin >> playerChoice;
-		cin.ignore(32767, '\n');
-
-		/* Increment count if the square chosen by player exists (is empty) */
-		for (int indexOuter = 0; indexOuter < 3; indexOuter++)
-		{
-			for (int indexInner = 0; indexInner < 3; indexInner++)
-			{
-				if (playerChoice == mSquareContents[indexOuter][indexInner])
-					count++;
-			}
-		}
-		/* If count is not incremented, player entered incorrect digit*/
-		if (count == 0)
-		{
-			cout << "Error: Invalid input.\n";
-			this->takePlayerChoice();
 		}
 	}
 	void countVacancies()
@@ -136,7 +166,7 @@ public:
 		else
 			currentChar = playerChar;
 
-		for (int index = 0; index < outerIndexes.size(); index++)
+		for (size_t index = 0; index < outerIndexes.size(); index++)
 		{
 			temp = mSquareContents[outerIndexes[index]][innerIndexes[index]];
 			mSquareContents[outerIndexes[index]][innerIndexes[index]] = currentChar;
@@ -177,9 +207,9 @@ public:
 			if (earlierMarked[0] != 100) break;
 		}
 
-		for (int outer = 0; outer < outerIndexes.size(); outer++) //Iterate through all available vacancies
+		for (size_t outer = 0; outer < outerIndexes.size(); outer++) //Iterate through all available vacancies
 		{
-			for (int compareWith = outer + 1; compareWith < outerIndexes.size(); compareWith++)
+			for (size_t compareWith = outer + 1; compareWith < outerIndexes.size(); compareWith++)
 			{
 				if (outerIndexes[outer] == outerIndexes[compareWith] && outerIndexes[outer] == earlierMarked[0]) //Check if a horizontal line can be formed from left to right
 				{
@@ -274,9 +304,9 @@ public:
 			}
 		}
 
-		for (int index = 0; index < playerMovesOuterIndexes.size(); index++) // Scan the vector and remove any moves that have been stored repeatedly
+		for (size_t index = 0; index < playerMovesOuterIndexes.size(); index++) // Scan the vector and remove any moves that have been stored repeatedly
 		{
-			for (int compareWith = index + 1; compareWith < playerMovesOuterIndexes.size(); compareWith++)
+			for (size_t compareWith = index + 1; compareWith < playerMovesOuterIndexes.size(); compareWith++)
 			{
 				if (playerMovesOuterIndexes[index] == playerMovesOuterIndexes[compareWith] &&
 					playerMovesInnerIndexes[index] == playerMovesInnerIndexes[compareWith])
@@ -827,6 +857,8 @@ public:
 		{
 			return DRAW;
 		}
+		SetWindowTextA(g_hWndStatusbar, "Mark a square"); // If the game has not been won, lost or drawn, tell the player to mark a square
+		return NONE; // If the player neither wins, loses or gets a draw, return NONE
 	}
 	void play()
 	{ /*
@@ -835,42 +867,44 @@ public:
 	   * Prints the entire grid everytime the function is called
 	   * Throws value 0 when game ends
 	   */
-		cout << *this;
 
 		if (!this->isFull()) //Player's move
 		{
-			this->takePlayerChoice();
 			this->updateGrid(playerChar);
 			switch (this->checkVictory())
-			{
+			{ 
 			case WIN:
-				cout << "\n\tYOU WIN!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "You win!");
+				isWonOrLost = true;
+				break;
 			case LOSE:
-				cout << "\n\tYOU LOSE!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "You lose!");
+				isWonOrLost = true;
+				break;
 			case DRAW:
-				cout << "\n\tTHE GAME IS A DRAW!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "The game is a draw!");
+				break;
 			}
 
 		}
 
-		if (!this->isFull()) //Computer's move
+		if (!this->isFull() && !this->getIsWonOrLost()) //Computer's move
 		{
 			this->takeComputerChoice();
 			this->updateGrid(computerChar);
 			switch (this->checkVictory())
 			{
 			case WIN:
-				cout << "\n\tYOU WIN!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "You win!");
+				isWonOrLost = true;
+				break;
 			case LOSE:
-				cout << "\n\tYOU LOSE!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "You lose!");
+				isWonOrLost = true;
+				break;
 			case DRAW:
-				cout << "\n\tTHE GAME IS A DRAW!\n";
-				throw 0;
+				SetWindowTextA(g_hWndStatusbar, "The game is a draw!");
+				break;
 			}
 		}
 
@@ -895,68 +929,3 @@ public:
 		return (count == 0) ? true : false;
 	}
 };
-ostream& operator<<(ostream& out, const TicTacToe& t)
-{ /*
-   * Overload operator << to print entire grid
-   */
-	out << '\n';
-	for (int indexOuter = 0; indexOuter < 3; indexOuter++)
-	{
-		for (int indexInner = 0; indexInner < 3; indexInner++)
-		{
-			if (indexInner == 0)
-			{
-				out << ' ' << t.mSquareContents[indexOuter][indexInner] <<
-					" | " << t.mSquareContents[indexOuter][indexInner + 1] << " | " <<
-					t.mSquareContents[indexOuter][indexInner + 2] << '\n';
-				for (int num = 1; num <= 11 && indexOuter != 2; num++)
-				{
-					if (num % 4 == 0)
-						out << '+';
-					else
-						out << '-';
-				}
-				out << '\n';
-			}
-		}
-	}
-	out << '\n';
-	return out;
-
-}
-int main()
-{
-	srand(static_cast<unsigned int>(time(0)));
-	char difficulty; //Difficulty selected by user in character format
-	int intDifficulty; //Difficulty selected by user converted to int
-	while (difficulty != 'E' && difficulty != 'e' && difficulty != 'M' && difficulty != 'm' && difficulty != 'I' && difficulty != 'i')
-	{
-		cout << "Choose a difficulty level (E-EASY, M-MEDIUM, I-IMPOSSIBLE): ";
-		cin >> difficulty;
-		cin.ignore(32767, '\n'); // Take only one character input, ignore other 32,767 characters of until newline
-		if (cin.fail()) // If cin fails, clear the buffer and ignore until 32,767 characters of a newline
-		{
-			cin.clear();
-			cin.ignore(32767, '\n');
-		}
-	}
-	if (difficulty == 'E' || difficulty == 'e')
-		intDifficulty = 0;
-	else if (difficulty == 'M' || difficulty == 'm')
-		intDifficulty = 1;
-	else if (difficulty == 'I' || difficulty == 'i')
-		intDifficulty = 2;
-	TicTacToe t(intDifficulty);
-
-	try
-	{
-		while (!t.isFull())
-			t.play();
-		cout << t;
-	}
-	catch (int) // Catches exception thrown in TicTacToe::play()
-	{
-		cout << t;
-	}
-	return 0;
-}
