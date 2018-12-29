@@ -51,5 +51,11 @@
     <Image Include="TicTacToe.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Screenshot.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Readme.md" />
   </ItemGroup>
 </Project>

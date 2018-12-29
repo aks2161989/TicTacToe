@@ -539,6 +539,20 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_INITDIALOG:
+	{ // Setting the title bar icon in the "About" box
+		HANDLE hIcon;
+		hIcon = LoadImageA(hInst, 
+			MAKEINTRESOURCE(IDI_TICTACTOE),
+			IMAGE_ICON,
+			GetSystemMetrics(SM_CXSMICON),
+			GetSystemMetrics(SM_CXSMICON),
+			0);
+		if (hIcon)
+		{ //WM_SETICON message changes or sets the small or large icons of windows
+		  // In this case we are setting the small icon, so set wParam to ICON_SMALL
+			SendMessageA(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+		}
+	}
 		return (INT_PTR)TRUE;
 
 	case WM_COMMAND:
